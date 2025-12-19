@@ -53,8 +53,8 @@ The model solves the following system (derived from Section III of the paper):
 
 ### Key Functions
 * `_seasonality(t)`: Returns a value between 0 and 1 representing seasonal productivity.
-* `_cannibalism_factor(R)`: Returns $\phi$, the efficiency of converting larvae to food. Activates when $R < 500$.
-* `_transition_hive_to_forager(...)`: Calculates $T_H$, the rate at which nurses become foragers. This is the core "Brain" of the colony regulation.
+* `_cannibalism_factor(R)`: Returns $\phi$, the efficiency of converting larvae to food.
+* `_transition_hive_to_forager(...)`: Calculates $T_H$, the rate at which nurses become foragers.
 
 ---
 
