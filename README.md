@@ -17,7 +17,7 @@ The model explicitly tracks six stages of bees and one resource variable:
 ## Key Features
 
 ### 1. Biological Realism
-* **Seasonality ($s(t)$):** Implements a sigmoidal seasonal forcing function that drives egg-laying rates and foraging success, simulating a full year cycle (Spring bloom vs. Winter dormancy).
+* **Seasonality (s(t)):** Implements a sigmoidal seasonal forcing function that drives egg-laying rates and foraging success, simulating a full year cycle (Spring bloom vs. Winter dormancy).
 * **Social Feedback Loops:**
     * **Inhibition:** High populations of foragers and larvae release pheromones that slow down the maturation of hive bees into foragers.
     * **Acceleration:** Resource scarcity or high mortality triggers a "precocious foraging" response, accelerating the transition rate ($T_H$).
