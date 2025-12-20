@@ -36,6 +36,63 @@ Built-in plotting tools using `matplotlib` to visualize:
 * Resource levels on a secondary axis.
 * Real-time fluctuations in the **Hive-to-Forager Transition Rate ($T_H$)**.
 
+## Installation
+
+### Prerequisites
+You need Python 3.x and the following scientific libraries:
+
+```bash
+pip install numpy matplotlib
+```
+
+---
+
+## Usage
+
+### 1. Quick Start
+Save `model.py`) and run it. The simulation loop is decoupled from the model logic, allowing you to swap solvers.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from model import DyBePoModel, rk4
+
+# 1. Define Initial State (aka Population)
+initial_pops = {
+    'E': 500, 'L': 800, 'P': 0, 'D': 0, 
+    'H': 8000, 'F': 500, 'R': 8000
+}
+
+# 2. Initialize Model
+hive = DyBePoModel(initial_pops)
+
+# 3. Run Simulation Loop
+days = 1000 # Total days simulates
+dt = 0.5 # Time step (half-day)
+history = []
+
+t = 0 # Start from day 0 (January 1st), can be changed depending on needs
+while t < days:
+    # Calculate auxiliary variables (like Transition Rate) for analysis
+    current_Th = hive._transition_hive_to_forager(
+        hive.state['L'], hive.state['H'], hive.state['F'], 
+        hive.state['R'], hive.state['D']
+    )
+    
+    # Store history
+    record = hive.state.copy()
+    record['time'] = t
+    record['T_H'] = current_Th
+    history.append(record)
+    
+    # Calculate Next Step using RK4 Solver
+    next_state = rk4(hive.state, t, dt, hive.get_derivatives)
+    
+    # Update State
+    hive.state = next_state
+    t += dt
+```
+
 ---
 
 ## Model Documentation
