@@ -92,6 +92,66 @@ while t < days:
     t += dt
 ```
 
+To generate a graph of the bee population of each stage, for example, you can run the code as follows.
+
+```
+def plot_simulation_results(history):
+    """
+    Plots the trajectory of all beehive castes and resources over time.
+    
+    Args:
+        history (list of dict): A list where each item is a dictionary 
+                                containing 'time', 'E', 'L', 'P', 'H', 'F', 'R'.
+    """
+    # Extract data columns
+    t_vals = [step['time'] for step in history]
+    E_vals = [step['E'] for step in history]
+    L_vals = [step['L'] for step in history]
+    P_vals = [step['P'] for step in history]
+    D_vals = [step['D'] for step in history]
+    H_vals = [step['H'] for step in history]
+    F_vals = [step['F'] for step in history]
+    R_vals = [step['R'] for step in history]
+    
+    # Create the figure
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+
+    # Plot Population Castes on Left Y-Axis
+    ax1.set_xlabel('Time (Days)', fontsize=20)
+    ax1.set_ylabel('Population Count', color='black', fontsize=20)
+    
+    ax1.plot(t_vals, E_vals, label='Eggs', color='gold', linestyle='--')
+    ax1.plot(t_vals, L_vals, label='Larvae', color='orange')
+    ax1.plot(t_vals, P_vals, label='Pupae', color='brown')
+    ax1.plot(t_vals, D_vals, label='Drone', color='purple')
+    ax1.plot(t_vals, H_vals, label='Hive Bees', color='blue')
+    ax1.plot(t_vals, F_vals, label='Foragers', color='green')
+    
+    ax1.tick_params(axis='y', labelcolor='black')
+    ax1.grid(True, alpha=0.3)
+
+    # Plot Resources on Right Y-Axis (Secondary Axis)
+    ax2 = ax1.twinx()  
+    ax2.set_ylabel('Resources (grams)', color='red', fontsize=20)
+    ax2.plot(t_vals, R_vals, label='Resources', color='red', linewidth=2, linestyle=':')
+    ax2.tick_params(axis='y', labelcolor='red')
+
+    # Combine Legends
+    lines_1, labels_1 = ax1.get_legend_handles_labels()
+    lines_2, labels_2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper right', fontsize=15)
+
+    plt.title('Beehive Population Dynamics & Resource Levels', fontsize=24)
+    plt.tight_layout()
+    plt.show()
+```
+
+If you ran the first part of usage, you will have all your simulated data recorded in ```history```, thus you can run the code below to generate a graph.
+
+```
+plot_simulation_results(history)
+```
+
 ---
 
 ## Model Documentation
