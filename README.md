@@ -49,7 +49,6 @@ pip install numpy matplotlib
 
 ## Usage
 
-### 1. Quick Start
 Save `model.py`) and run it. The simulation loop is decoupled from the model logic, allowing you to swap solvers.
 
 ```python
