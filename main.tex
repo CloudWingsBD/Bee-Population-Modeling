@@ -1,0 +1,327 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+% --- Essential Packages ---
+\usepackage{cite} 
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{multirow}
+\usepackage{url}
+
+% --- Algorithm Packages ---
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\title{DyBePo: Dynamic Beehive Population Modeling}
+
+\author{
+\IEEEauthorblockN{Joey Yizhi Li}
+\IEEEauthorblockA{1010877044\\
+joeyyizhi.li@mail.utoronto.ca}
+\and
+\IEEEauthorblockN{Sheng (Bob) Dai}
+\IEEEauthorblockA{1010865342\\
+bob.dai@mail.utoronto.ca}
+\and
+\IEEEauthorblockN{Jiakai (Eric) Wei}
+\IEEEauthorblockA{1010862791 \\
+jiakai.wei@mail.utoronto.ca}
+\and
+\IEEEauthorblockN{Paul Dong}
+\IEEEauthorblockA{1010980431 \\ 
+paul.dong@mail.utoronto.ca}
+}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+    
+
+Population dynamics in eusocial insects differ fundamentally from those of non-eusocial species, as colony-level survival and reproduction are governed by the internal demographic structure and resource status of each colony. In honey bees, flexible division of labor arising from age polyethism couples brood rearing, worker task allocation, and food availability through delayed feedback loops that strongly influence colony growth and collapse. Honey bee colonies are of particular interest due to their critical role in ecosystem pollination and agricultural productivity, as well as the widespread and persistent increases in colony failure rates observed in recent decades. These losses highlight the need to better understand how internal demographic regulation and resource dynamics interact to determine colony stability and vulnerability to collapse. Motivated by this perspective, and building on the compartmental frameworks of Khoury et al. and related population models \cite{Khoury2011, schmickl2007hopomo, Russell2013, torres}, we develop \textit{DyBePo}, a system of ordinary differential equations describing the intracolonial dynamics of eggs, larvae, pupae, hive bees, foragers, and drones, coupled to an explicit food reserve. The model incorporates seasonally forced egg-laying and foraging, socially regulated transitions between hive bees and foragers, food-dependent mortality, and brood cannibalism under resource limitation. Numerical simulations capture realistic seasonal population fluctuations and provide a mechanistic framework for exploring how demographic regulation and resource stress interact to shape colony stability and failure. This model serves as a minimal yet extensible tool for studying honey bee colony dynamics under varying environmental and demographic conditions.
+
+
+\end{abstract}
+
+\begin{IEEEkeywords}
+Honey bee, population modeling, ODEs, division of labor, food-dependent mortality
+\end{IEEEkeywords}
+
+\section{Introduction}
+Honey bees (\textit{Apis mellifera}) play a vital role in maintaining both natural ecosystems and global agricultural productivity through their pollination services. A significant proportion of flowering plants and approximately one-third of human food crops rely directly or indirectly on animal pollination \cite{Khalifaetal2021}, with honey bees representing the most economically important managed pollinator species worldwide. Consequently, the health and stability of honey bee colonies are closely tied to food security, biodiversity, and economic sustainability \cite{Reillyetal2020}.
+
+In recent decades, however, honey bee populations have experienced substantial declines in many regions. Annual colony loss rates exceeding 30--40\% have been reported in parts of North America and Europe \cite{Bruckneretal2023}, raising concerns among scientists, policymakers, and agricultural producers. These losses are not attributed to a single cause, but rather to the combined effects of multiple stressors \cite{Hristovetal2020}, including parasitic mites such as \textit{Varroa destructor} \cite{Bruckneretal2021}, viral and fungal pathogens, pesticide exposure \cite{Garberetal2022}, nutritional stress, habitat loss, and climate variability. The phenomenon commonly referred to as Colony Collapse Disorder (CCD) illustrates the complexity of colony failure, in which colonies can rapidly depopulate despite the absence of an obvious singular trigger \cite{Khouryetal2011}.
+
+A central challenge in understanding honey bee decline lies in the fact that a colony functions as a highly integrated biological system rather than a collection of independent individuals \cite{Amdam2006}. Honey bee colonies exhibit strong interdependence between brood production, worker population structure, division of labor, and resource availability \cite{Nieh2010}. Disruptions to any one of these components can propagate through the system via feedback mechanisms, potentially driving the colony past critical thresholds that result in rapid decline or collapse \cite{Khouryetal2011}. As a result, intuitive reasoning alone is often insufficient to predict colony responses to environmental or demographic perturbations. This paper presents a mathematical population model, namely \textit{DyBePo},  based on ODEs for the population of honeybee colonies over time with various biological and environmental factors.
+\section{Background: Honey Bee Hive Dynamics}
+
+\subsection{The Honey Bee Colony as a Superorganism}
+
+Honey bee colonies are eusocial systems in which individuals cooperate to such an extent that the colony itself can be viewed as a superorganism \cite{Seeley1989}. Reproduction is centralized in a single queen, while the vast majority of colony members are non-reproductive worker bees that perform tasks necessary for colony maintenance and survival \cite{Winston1991}. As a result, population dynamics at the colony level differ fundamentally from those of non-social species, where each individual independently contributes to reproduction \cite{Khouryetal2011}.
+
+Colony success depends not only on the total number of bees present, but also on the distribution of individuals across developmental stages and behavioral roles \cite{Schmickl2007}. For example, a colony with a large adult population but insufficient nurse bees may be unable to rear brood effectively, while a colony with abundant brood but too few foragers may suffer from resource shortages \cite{Johnson2010}. These dependencies create strong internal feedback loops that shape colony growth and decline \cite{Sumpter2009}.
+
+\subsection{Life Cycle and Age Structure}
+
+Worker honey bees progress through four primary life stages: egg, larva, pupa, and adult \cite{Winston1991}. Following emergence as adults, workers typically transition through a sequence of age-dependent tasks, a phenomenon known as age polyethism \cite{Robinson1992}. Young adult workers primarily function as nurse bees, caring for brood and performing tasks within the hive \cite{Seeley1982}. As workers age, they transition to external tasks such as foraging for nectar and pollen \cite{Khouryetal2013}.
+
+Age structure plays a critical role in colony dynamics. Nurse bees are essential for brood survival, as larvae require frequent feeding with protein-rich secretions derived largely from pollen \cite{Crailsheim1992}. Foragers, in contrast, experience significantly higher mortality due to predation, environmental exposure, and energetic stress \cite{Visscher1997}. The timing of the transition from in-hive work to foraging therefore strongly influences both individual lifespan and overall colony stability \cite{Khouryetal2011, Perry2015}.
+
+\subsection{Division of Labor and Social Regulation}
+Task allocation within a honey bee colony is regulated through flexible social feedback mechanisms rather than rigid genetic programming \cite{Robinson2003}. Chemical signals, including pheromones exchanged among workers, allow colonies to dynamically adjust the proportion of bees assigned to different tasks \cite{Slessor2005}. When forager numbers decline, younger workers may begin foraging earlier than usual, a process known as precocious foraging \cite{Perry2015}. While this response can temporarily compensate for lost foragers, it often reduces worker longevity and can destabilize the colony if sustained \cite{Khouryetal2011, Perry2015}.
+
+Brood production is similarly regulated by colony conditions \cite{Schmickl2007}. Under nutritional stress or limited nursing capacity, colonies may reduce brood rearing or cannibalize larvae to recycle protein and support adult survival \cite{Schmickl2008}. These behaviors highlight the importance of feedback between population structure and resource availability in maintaining colony homeostasis \cite{Khouryetal2013}.
+
+\subsection{Role of Resources and Nutrition}
+Food availability is inherently seasonal, driven by flowering cycles, weather patterns, and landscape composition \cite{Sgolastra2019}. As a result, honey bee colonies typically exhibit pronounced seasonal population fluctuations, expanding during spring and summer and contracting during autumn and winter \cite{Winston1991}. Successful overwintering depends on maintaining both sufficient adult population size and adequate food reserves, making the timing and magnitude of population growth critical \cite{Doring2022}.
+
+\subsection{Literature Review on Common Used Models}
+Honey bee colony dynamics have been modeled using both compartmental and age-structured approaches. Compartmental ODE models, such as that of Khoury et al., aggregate brood, hive bees, foragers, and food into coupled populations regulated by recruitment, mortality, and pheromonal feedback \cite{Khoury2011}, but neglect age-specific delays. To overcome this limitation, Torres et al. developed an age-structured framework that explicitly tracks biological castes and derives analytical steady-state solutions before extending to a high-resolution ODE system capturing transient and seasonal dynamics \cite{Modeling_Honey_Bee_Pop}. Alternative rule-based models, such as HoPoMo, represent similar biological detail but at the cost of increased complexity and reduced analytical transparency \cite{Schmickl2007}.
+
+
+\section{Model Construction}
+\subsection{Assumption}
+We made the following assumptions in the model
+\begin{itemize}
+    \item The honey bee colony is treated as a closed system, with no immigration or emigration of bees between colonies. Honey bee colonies are largely demographically isolated over short to medium time scales, as worker drift between colonies is minimal compared to internal population turnover.
+    \item The colony is modeled as a superorganism, and individual-level variability is not explicitly represented.
+    \item The population is divided into distinct compartments representing key biological roles or life stages. The compartments are egg, larvae, pupae, hive bees, drones, and forager bees. This practice is widely used in other models \cite{Khoury2011} \cite{Schmickl2007}. 
+\end{itemize}
+
+\subsection{Equation}
+\begin{figure*}[htb]
+    \centering
+    \includegraphics[width=0.6\linewidth]{figs/model.jpg}
+    \caption{Schematic of \textit{DyBePo}. The different life stages and transition processes are presented. Bees enter one caste through transitioning from the previous caste, and exit either through death or transitioning to the next caste.}
+    \label{fig:schematics}
+\end{figure*}
+The overall schematic representation of \textit{DyBePo} is shown in Fig.\ref{fig:s(t)}. We denote $E$, $L$, $P$, $D$, $H$, and $F$ as the number of eggs, larvae, pupae, drones, hive bees, and foragers, respectively. The specific population dynamic is displayed in fig. Essentially, the differential equation for the population dynamics of each caste takes into account the members entering (through maturation) and leaving the caste (transition to the next caste or death). We also denote $T_x$ as the transition factor from the current caste to the next caste, and $M_x$ as the mortality rate at this caste. 
+
+We first construct the differential equation responsible for eggs. An egg is the first stage of the life cycle of a bee. It is a tiny white grain of rice that stands upright in the comb. 
+\begin{equation}
+    \frac{dE}{dt} = s(t)E_0(\frac{(H+F)^2}{c^2+(H+F)^2})-EM_E-ET_E
+    \label{eqn:dedt}
+\end{equation}
+
+The first term represents the eggs laid by the queen. Specifically, $E_0$ is the maximum egg-laying rate of the queen. $s(t)$ is a seasonal factor. We adopt the seasonal factor modeled by Schmickl \cite{Schmickl2007}. The parameter $x_{1-5}$ can be adjusted to change the shape of the sigmoidal function to fit different climates. We use the same set of parameters used by Schmickl et al.\cite{Schmickl2007}, where $x_{1-5}=\{385,30,36,155,30\}$. The dynamics of $s(t)$ is displayed in Fig.\ref{fig:s(t)}.
+\begin{equation}
+s(t) = 1- \max \left\{
+\begin{aligned}
+&1 - \frac{1}{1 + x_1 e^{-2t/x_2}} \\
+&\frac{1}{1 + x_3 e^{-2(t - x_4)/x_5}}
+\end{aligned}
+\right.
+\label{eqn:s(t)}
+\end{equation}
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/Code_Generated_Image.png}
+    \caption{The dynamics of the seasonal factor throughout a year. The equation is defined in (\ref{eqn:s(t)}). It is used to model egg-laying rate and food availability.}
+    \label{fig:s(t)}
+\end{figure}
+If the number of hive bees and foragers is low, the egg-laying rate of the queen will also be affected. We used the sigmoidal term $\frac{(H+F)^2}{c^2+(H+F)^2}$ to represent this mechanism. $(H+F)$ represents the number of hive bees and foragers, which are the adult bees in the hive. The constant $c$ controls the slope of this sigmoidal function. The second and the third terms of (\ref{eqn:dedt}) are responsible for the death of eggs, and the transition from egg to pupae. 
+
+
+
+\begin{equation}
+    \frac{dL}{dt} = ET_E-LM_L-LT_L
+    \label{eqn:dldt}
+\end{equation}
+After hatching, the eggs will turn into larvae. It will be fed with royal jelly or bee bread, depending on whether the larvae will become a queen or not. Similarly, the differential equation responsible for larvae is constructed through three terms: the transition from egg to larvae, the mortality, and the transition from larvae to pupae. The mortality rate of the larvae is affected by various factors, including the care from the hive bees and the availability of food. Thus, we modeled $M_L$ as
+\begin{equation}
+    M_L=min(1,M_{L,0}(max(1,\frac{(R^H_F)_{Healthy}}{R^H_F}))^\delta)
+    \label{eqn:ml}
+\end{equation}
+
+$M_{L,0}$ is the base mortality rate of larvae, which changes when the food reserve is less than 100g, which will be explained in Section \ref{subsect:mortality}. The second part models the care from the hive bees to larvae. The ratio $R^H_F=\frac{H}{F}$. $(R^H_F)_{Healthy}$ is the health ratio where the larvae received sufficient care. Torres et al. \cite{torres} used a value of $(R^H_F)_{Healthy}=2$ obtained from Schmickl et al. \cite{Schmickl2007}. For $R^H_F<(R^H_F)_{Healthy}$, the mortality rate of the larvae will be increased. $\delta$ controls how severely the lack of care increases the mortality rate. We plot this care multiplier with different $\delta$ in Fig.\ref{fig:care}. To prevent the mortality rate from being larger than 1, we cap $M_L$ with 1.
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=1.0\linewidth]{figs/care multiplier.png}
+    \caption{Effects of exponent $\delta$ on the mortality rate of larvae.}
+    \label{fig:care}
+\end{figure}
+
+The life stage of larvae ends when the larvae is sealed with a wax capping. The pupae use their stored energy and undergo full metamorphosis to rebuild themselves into an adult structure. Likewise, the differential equation governing the change of pupae is obtained from the transition of larvae to pupae, the death of pupae, and the transition of pupae to drone or hive bees. Since the capped larvae live in a stable environment, we treat $M_P$ and $T_P$ as constants.
+\begin{equation}
+    \frac{dP}{dt} = LT_L-PM_P-PT_P
+    \label{eqn:dpdt}
+\end{equation}
+
+Drones are born from unfertilized eggs, and their sole purpose is to reproduce. We used a drone ratio $\mu$ to control the percentage of eggs that are unfertilized and turn into drones, represented as $\mu PT_P$. The second term accounts for the death of drones.
+\begin{equation}
+    \frac{dD}{dt}=\mu PT_P-M_DD
+\end{equation}
+
+The fertilized eggs, on the other hand, become worker bees. Her internal glands govern the responsibility of a worker bee. For the first stage, the worker bees take care of the internal condition of the bee hive, including nursing and feeding the larvae, grooming the queen, and constructing the bee hive. We call the worker bees in this stage as hive bees, and denote them as $H$. The first part of the differential equation is the transition from pupae that are fertilized to hive bees. The second term is the death of hive bees, and the third term represents the transition from hive bees to forager bees.
+\begin{equation}
+    \frac{dH}{dt} = (1-\mu)PT_P-HM_H-HT_H
+\end{equation}
+
+Around day 21, the hive bee becomes a forager $F$. She focuses entirely on navigation and payload, collecting pollen and nectar around the environment. Again, we modeled the differential equation for $F$ through two terms-one for transitioning from a hive bee to a forager, and one for death.
+\begin{equation}
+    \frac{dF}{dt} = HT_H-FM_F
+\end{equation}
+
+The transition from hive bees to foragers involves a complex regulatory mechanism mediated by hormones, pheromones, and environmental conditions. Hormonal changes drive shifts in the bee’s neurobiology, preparing individuals for flight and navigation. Foragers produce the pheromone ethyl oleate, which acts as an inhibitory signal that delays the transition of hive bees into foragers. When foragers are lost, this inhibitory effect is reduced, allowing rapid role transitions to compensate for the deficit. Additionally, larvae produce brood pheromones that stimulate nursing behavior and further delay the transition from hive bees to foragers, ensuring adequate care for developing brood. Environmental conditions, modeled through hive food storage, also regulate the transition from hive bees to foragers. Low food reserves weaken inhibitory effects and accelerate recruitment, while high reserves delay the transition and stabilize labor allocation. Thus, we modeled $T_H$ as a baseline rate modified by multiplicative regulatory factors:
+
+\begin{equation}
+T_H=\alpha+ \beta \frac{b^2}{b^2+R^2}- \sigma \dfrac{F}{H + F}- \gamma \dfrac{L}{H + L}
+\label{eqn:TH}
+\end{equation}
+
+
+Here, the parameter \(\alpha\) represents the baseline transition rate. In the absence of regulatory effects, the transition rate reduces to \(T_H = \alpha\).
+
+The numerator introduces an amplifying factor that captures environmental pressure due to food availability. The term \(\dfrac{b^2}{b^2 + R^2}\) decreases monotonically with increasing food reserves \(R\), ensuring that food scarcity increases the transition rate while food abundance suppresses it. The parameter \(\beta\) controls the sensitivity of the transition rate to changes in food storage, and \(b\) determines the steepness of this response.
+
+The denominator consists of two inhibitory terms. The first term, $\sigma \frac{F}{H + F}$, represents social inhibition mediated by foragers through ethyl oleate pheromone. As the proportion of foragers increases, this term grows and reduces the transition rate. The parameter \(\sigma\) governs the strength of this inhibitory effect.
+
+The second inhibitory term, $\gamma \frac{L}{H + L}$, accounts for brood pheromone effects arising from larvae. An increase in the proportion of larvae strengthens inhibition and further suppresses the transition rate, with \(\gamma\) controlling the magnitude of this effect.
+
+\subsection{Food Reserve}
+We denote $R$ as the food storage in the bee hive. The rate of change of food stored is modeled by the difference between the amount of food brought by the forager and the consumption by the foragers, drones, hive bees, and larvae.
+\begin{equation}
+    \frac{dR}{dt} =  s(t) \rho F-(LC_L+DC_D+HC_H+FC_F)+\phi(wLM_L)
+    \label{eqn:food}
+\end{equation}
+The first term, $s(t) \rho F$, models the food brought by the foragers. We utilized the seasonal factor from (\ref{eqn:s(t)}) to model the availability of food through the year. $\rho$ is the maximum amount of food that a forager can bring per day.
+
+The terms $LC_L+DC_D+HC_H+FC_F$ represent the consumption of food from the foragers, drones, hive bees, and larvae. Their respective food consumption per day per bee is denoted as $C_L$, $C_D$, $C_H$, and $C_F$. 
+
+The last term, $\phi wLM_L$, represents the cannibalism in the bee hive. When food storage is low, bees may kill larvae to supplement the food storage. $\phi$ controls the strength of cannibalism, and is modeled as a sigmoidal function shown in (\ref{eqn:phi}). The constant $b$ controls the steepness of the sigmoidal function, which is the same one used in (\ref{eqn:TH}). We set $b=500$ according to Russel et al. \cite{Russell2013}. The maximum of $phi$ is set to be 0.2, as we assume one-fifth of the body mass of the larvae will be turned into food. $w$ is the average weight of the larvae, which we set to be 85mg according to Schmickl and Crailsheim \cite{Schmickl2007}.
+\begin{equation}
+    \phi=0.2\frac{b^2}{b^2+R^2}
+    \label{eqn:phi}
+\end{equation}
+
+At last, we set $R\geq0$ so that a negative $R$ won't be obtained during the process.
+\subsection{Mortality Rate}
+\label{subsect:mortality}
+The mortality rate of the hive bees, drones, and foragers can change drastically due to external conditions. We identify two conditions: food reserve $R$ and day in the year $t$.
+
+When $R\leq100g$, we will adjust the mortality rate of larvae, drones, hive bees, and foragers. We chose 100 to represent the amount of inaccessible food in the hive. According to the study of Fukuda and Sakagami, Khoury et al., and Schmickl and Crailsheim \cite{Deathrate,Khoury2011,Schmickl2007}, we obtain the following mortality rate. The mortality rate for egg and pupae is set to be $M_E=0.058$ and $M_P=0.015$. 
+
+\begin{equation} 
+M_{L,0} = \begin{cases} 
+0.5  & R \leq 100 \\
+0.083 & R > 100 
+\end{cases} \label{eqn:mL_modified} 
+\end{equation}
+
+\begin{equation} 
+M_H = \begin{cases} 
+0.15  & R \leq 100 \\
+0.01 & R > 100 
+\end{cases} \label{eqn:mL_modified} 
+\end{equation}
+
+
+During winter, drone bees are actively expelled from the hive, as they do not contribute to overwintering survival and impose a high energetic cost on the colony. This well-documented behavior results in near-certain drone mortality during winter periods. To reflect this biological mechanism, drone mortality is modeled as a season- and resource-dependent process.
+
+We define winter as the period
+\[
+265 \leq t \leq 365 \quad \text{and} \quad 0 \leq t \leq 100,
+\]
+corresponding to late and early portions of the annual cycle. During winter, the drone mortality rate is set to its maximum value, representing complete drone loss.
+
+The drone mortality rate $M_D$ is therefore defined as
+\begin{equation}
+M_D =
+\begin{cases}
+0.15 & R \leq 100,\; 101 \leq t < 265, \\
+0.03 & R > 100,\; 101 \leq t < 265, \\
+1 & 265 \leq t \leq 365 \;\text{or}\; 0 \leq t \leq 100,
+\end{cases}
+\label{eqn:drone_mortality}
+\end{equation}
+where $R$ denotes the level of food storage in grams in the hive.
+
+Outside the winter season ($101 \le t \le 265$), drone mortality depends on food availability, with higher mortality under food scarcity and reduced mortality when sufficient resources are available. During winter, drone mortality is set to unity, reflecting the biological reality that drones are banished from the colony regardless of resource levels.
+
+
+During the winter, forager bees no longer engage in energetically demanding foraging activities and are largely confined to the hive. As a result, their exposure to external hazards such as predation, weather stress, and flight-related exhaustion is greatly reduced. Consequently, the life expectancy of forager bees increases substantially and can reach up to approximately 160 days. To capture this seasonal and resource-dependent variation in mortality, the forager mortality rate is modeled as a function of both food storage and time.
+
+The effective mortality rate of forager bees, denoted by $M_F(t,R)$, is defined as
+\begin{equation}
+M_F(t,R) = m_s(t)\, m(R),
+\end{equation}
+where $m(R)$ represents the base mortality rate determined by the level of food storage, and $m_s(t)$ accounts for seasonal variation.
+
+The base mortality rate $m(R)$ reflects the influence of stored resources on forager survival and is defined as
+\begin{equation}
+m(R) =
+\begin{cases}
+0.3, & R \leq 100, \\
+0.035, & R > 100,
+\end{cases}
+\label{eqn:mL_modified}
+\end{equation}
+where $R$ denotes the amount of food stored in the hive. When food reserves are insufficient, foragers experience a higher mortality rate associated with nutritional stress and increased colony vulnerability. Conversely, adequate food storage allows for a substantially reduced baseline mortality, consistent with overwintering behavior.
+
+Seasonal effects are incorporated through the multiplicative factor $m_s(t)$, which modifies the base mortality rate to reflect changes in environmental conditions and colony activity throughout the year. We define $m_s(t)$ using the seasonal forcing function $s(t)$ introduced in Eq.~(\ref{eqn:s(t)}), scaled as
+\begin{equation}
+m_s(t) = 0.3 + 0.7\, s(t).
+\end{equation}
+
+The lower bound of $m_s(t)$ is set to 0.3 to reflect the reduced mortality of forager bees during winter. Empirical observations indicate that the typical winter mortality rate of foragers is approximately $1\%$, and thus
+\[
+\frac{0.01}{0.035} \approx 0.3,
+\]
+which provides a biologically consistent lower limit for the seasonal modifier. This minimum value is also consistent with the lower bound used by Russell et al.~\cite{Russell2013}, ensuring alignment with established modeling frameworks.
+
+
+\section{Result}
+\subsection{Numeric Solution}
+We first use Euler's method to solve the model. Specifically, for the number of bees in caste $X$, where $X\in\{E, L, P,D,H,F\}$,
+\begin{equation}
+    X^{n+1}=X^{n}+\Delta t(\frac{dX}{dt})
+    \label{eqn:dxdt}
+\end{equation}
+Similarly, (\ref{eqn:food}) can be transformed into
+\begin{equation}
+    R^{n+1}=R^{n}+\Delta t(\frac{dR}{dt})
+    \label{eqn:rn}
+\end{equation}
+
+Equations (\ref{eqn:dxdt}) and (\ref{eqn:rn}) allow us to predict the food and bee population at time $(n+1)\Delta t$ when given the food and bee population at time $n\Delta t$. A smaller $\Delta t$ allows us to find a more accurate solution. 
+
+\subsubsection{Other Numeric Solutions}
+We also tested the performance of the improved Euler's method and Fourth-Order Runge-Kutta (RK4). The Improved Euler method is a second-order predictor-corrector scheme. It reduces error by averaging the derivative at the beginning and the estimated end of the interval. For a general system $\frac{dy}{dt} = f(t, y)$, the update rule is:
+$$\tilde{y}^{n+1} = y^n + \Delta t f(t^n, y^n)$$$$y^{n+1} = y^n + \frac{\Delta t}{2} [f(t^n, y^n) + f(t^{n+1}, \tilde{y}^{n+1})]$$
+For maximum precision, we implement the RK4 method. This algorithm computes four weighted "slopes" ($k_1$ through $k_4$) to approximate the curvature of the solution within the time step:$$k_1 = f(t^n, y^n)$$$$k_2 = f(t^n + \frac{\Delta t}{2}, y^n + \Delta t \frac{k_1}{2})$$$$k_3 = f(t^n + \frac{\Delta t}{2}, y^n + \Delta t \frac{k_2}{2})$$$$k_4 = f(t^n + \Delta t, y^n + \Delta t k_3)$$$$y^{n+1} = y^n + \frac{\Delta t}{6}(k_1 + 2k_2 + 2k_3 + k_4)$$
+\subsection{Parameterization}
+According to Fukuda and Sakagami \cite{Deathrate}, the daily food consumption for each caste, $C_F=0.007g$, $C_H=0.007g$, $C_D=0.014g$, and $C_L=0.033g$. The maximum food that can be collected by a forager is set to be $\rho=0.1g$ based on the estimation from Russell et al. \cite{Russell2013}. The drone ratio $\mu$ is set to be $5\%$. The transition rate from egg to larvae $T_E=0.33$, since it takes three days for the egg to hatch. The transition rate from pupae to adult bee $T_P=1/12$, since it takes 12 days for the pupae to undergo eclosion \cite{Deathrate}.
+
+
+\section{Results and Discussion}
+
+In this section, we present the numerical simulation results of the DyBePo model to evaluate its stability and biological validity. We systematically analyze the model's performance under varying numerical conditions, specifically focusing on the impact of different time intervals ($\Delta t$), numerical approximation methods, and key biological parameters (hyperparameters). By establishing a robust computational framework, we ensure that the subsequent biological predictions regarding colony collapse and recovery are artifacts of the model dynamics rather than numerical instability.
+
+\subsection{Time Interval ($\Delta t$)}
+
+To determine the optimal temporal resolution for the simulation, we first evaluated the stability of the Forward Euler method across a range of time steps, decreasing $\Delta t$ from 1.0 to 0.1, in units of days. Our initial testing revealed that a long time step of $\Delta t = 1.0$ saves computing time, but was, however, insufficient for capturing rapid transient behaviors, such as the sudden fall of drone bees when turning into winter. By shortening the time interval, we approached a more precise modeling of the population of the bee colony at $\Delta = 0.1$, while further shortening would not improve precision at a longer time scale. In addition, reducing $\Delta t$ to 0.1 day does not offer a huge computing load compared to $\Delta t = 1.0$. Thus, this value provided a necessary balance, eliminating significant errors while keeping a computationally manageable simulation.
+
+\subsection{Numerical Approximation Methods}
+
+With the time step fixed, we conducted a comparative analysis of three numerical integration techniques: Euler's method, Improved Euler's (Heun’s) method, and fourth-order Runge-Kutta (RK4) method. We evaluated each solver with two primary metrics: numerical precision and computing efficiency. Numerical precision is decided considering their global truncation error, among which RK4 method has the smallest error of $O(h^4)$. In comparison, Euler's method
+
+\subsection{}
+
+\subsection{Sensitivity Analysis}
+
+
+\section{Conclusion}
+In this paper, we developed \textit{DyBePo}, a compartmental ordinary differential equation model for the intracolonial population dynamics of honey bees. By treating the colony as a superorganism, the model explicitly represents key life stages and functional castes—eggs, larvae, pupae, hive bees, foragers, and drones—together with an internal food reserve that mediates survival and task allocation. The formulation captures essential biological feedback mechanisms, including age-based division of labor, socially regulated transitions between hive bees and foragers, seasonally driven egg-laying and foraging activity, and resource-dependent mortality processes such as brood cannibalism.
+
+Numerical simulations demonstrate that the model reproduces realistic seasonal fluctuations in colony population structure and food storage, highlighting how demographic regulation and resource availability interact to influence colony growth and stability. In particular, the results emphasize the sensitivity of colony dynamics to forager mortality, food availability, and the timing of worker role transitions, consistent with insights from prior analytical and empirical studies.
+
+\textit{DyBePo} can be improved, however. Future work may include parameter calibration using empirical colony data. Accurate healthy ratio, impact of pheromones, egg laying rate, and forager lifespan can greatly benefit the current model. \textit{DyBePo} also didn't consider the influence of pathogens and parasites. As such, this model provides a flexible foundation for investigating honey bee colony dynamics and for improving our understanding of the mechanisms underlying colony resilience and failure.
+
+\bibliographystyle{IEEEtran}
+\bibliography{mybib}
+
+\end{document}
