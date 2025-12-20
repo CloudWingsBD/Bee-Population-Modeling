@@ -10,7 +10,7 @@ The model explicitly tracks six stages of bees and one resource variable:
 * **L**: Larvae
 * **P**: Pupae
 * **D**: Drones
-* **H**: Hive Bees (Nurses/Builders)
+* **H**: Hive Bees
 * **F**: Foragers
 * **R**: Food Resources
 
@@ -47,14 +47,14 @@ The model solves the following system (derived from Section III of the paper):
 2.  **Larvae ($\frac{dL}{dt}$):** Hatched from eggs, removed by pupation or dynamic mortality (starvation/cannibalism).
 3.  **Pupae ($\frac{dP}{dt}$):** Metamorphosis stage.
 4.  **Drones ($\frac{dD}{dt}$):** Male bees, ejected during winter.
-5.  **Hive Bees ($\frac{dH}{dt}$):** Young adults (nurses), whose population depends on pupae emergence and transition to foraging.
+5.  **Hive Bees ($\frac{dH}{dt}$):** Young adults, whose population depends on pupae emergence and transition to foraging.
 6.  **Foragers ($\frac{dF}{dt}$):** Older adults, whose population depends on recruitment from hive bees ($T_H$) and environmental mortality.
 7.  **Resources ($\frac{dR}{dt}$):** Net change = (Foraging Gain) - (Consumption) + (Cannibalism Gain).
 
 ### Key Functions
 * `_seasonality(t)`: Returns a value between 0 and 1 representing seasonal productivity.
 * `_cannibalism_factor(R)`: Returns $\phi$, the efficiency of converting larvae to food.
-* `_transition_hive_to_forager(...)`: Calculates $T_H$, the rate at which nurses become foragers.
+* `_transition_hive_to_forager(...)`: Calculates $T_H$, the rate at which hive bees become foragers.
 
 ---
 
